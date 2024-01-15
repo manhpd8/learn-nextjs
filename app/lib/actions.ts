@@ -23,10 +23,17 @@ export async function createInvoice(formData: FormData) {
     const date = new Date().toISOString().split('T')[0];
 
     // insert vao db
-    await sql`
-    INSERT INTO invoices (customer_id, amount, status, date)
-    VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
-  `;
+    try {
+        await sql`
+        INSERT INTO invoices (customer_id, amount, status, date)
+        VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
+      `;
+    } catch (error) {
+        return {
+            message: 'Database Error: Failed to Create Invoice.',
+          };
+    }
+    
 
   // chuyen huong sau khi insert
   revalidatePath('/dashboard/invoices'); // to clear the client cache and make a new server request.
@@ -47,17 +54,28 @@ export async function updateInvoice(id: string, formData: FormData) {
  
   const amountInCents = amount * 100;
  console.log('dang update thong tin invoice')
-  await sql`
+  
+  try {
+    await sql`
     UPDATE invoices
     SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
     WHERE id = ${id}
   `;
+  }
+  catch (error) {
+    return { message: 'Database Error: Failed to Update Invoice.' };
+  }
   console.log('da update invoice')
   revalidatePath('/dashboard/invoices');// load data moi
   redirect('/dashboard/invoices');//chuyen den page
 }
 
 export async function deleteInvoice(id: string) {
-    await sql`DELETE FROM invoices WHERE id = ${id}`;
+    try {
+        await sql`DELETE FROM invoices WHERE id = ${id}`;
+    }
+    catch (error) {
+        return { message: 'Database Error: Failed to Update Invoice.' };
+      }
     revalidatePath('/dashboard/invoices');
   }
